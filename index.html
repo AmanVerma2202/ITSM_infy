@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI ITSM Exact Solution Agent</title>
+<style>
+:root{
+  --bg:#f6f8fc;--surface:#fff;--surface2:#f0f4fa;--text:#152238;
+  --muted:#65748b;--border:#dbe3ef;--accent:#2563eb;--accent-soft:#eaf2ff;
+  --green:#0f9f6e;--green-soft:#e8f8f1;--orange:#c77716;--orange-soft:#fff4df;
+  --red:#c24141;--red-soft:#fff0f0;--shadow:0 12px 35px rgba(20,40,80,.08);
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font:15px/1.55 Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif}
+button{font:inherit}
+.app{max-width:1400px;margin:auto;padding:28px}
+.top{display:flex;justify-content:space-between;gap:24px;align-items:flex-start;margin-bottom:22px}
+h1{font-size:30px;line-height:1.15;margin:0 0 8px}
+h2{font-size:20px;margin:0 0 12px}
+h3{font-size:15px;margin:0 0 7px}
+.lead{max-width:850px;color:var(--muted)}
+.pill{display:inline-flex;align-items:center;padding:7px 11px;border:1px solid var(--border);background:var(--surface);border-radius:999px;color:var(--accent);font-weight:700;font-size:12px}
+.layout{display:grid;grid-template-columns:1.45fr .85fr;gap:18px}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:18px;box-shadow:var(--shadow)}
+.flow-card{padding:20px}
+.flow-head{display:flex;justify-content:space-between;gap:12px;align-items:center;margin-bottom:16px}
+.flow{display:flex;flex-direction:column;gap:10px}
+.row{display:grid;grid-template-columns:1fr 34px 1fr 34px 1fr;gap:8px;align-items:center}
+.node{border:1px solid var(--border);background:var(--surface);border-radius:14px;padding:14px;min-height:112px;text-align:left;cursor:pointer;transition:.18s}
+.node:hover{border-color:#9dbcf0;transform:translateY(-1px)}
+.node.active{border-color:var(--accent);background:var(--accent-soft)}
+.node .step{font-size:11px;font-weight:800;color:var(--accent);letter-spacing:.7px}
+.node h3{margin-top:5px}
+.node p{font-size:12px;color:var(--muted);margin:0}
+.arrow{text-align:center;color:#8ba0ba;font-size:20px}
+.band{margin:8px 0 2px;padding:12px 14px;border:1px dashed var(--border);border-radius:13px;background:var(--surface2);color:var(--muted);font-size:12px}
+.branch{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.good{border-color:#b9e8d6;background:var(--green-soft)}
+.warn{border-color:#f2d5a6;background:var(--orange-soft)}
+.detail{padding:20px;position:sticky;top:18px;height:max-content}
+.detail .eyebrow{color:var(--accent);font-size:11px;font-weight:800;letter-spacing:1px}
+.detail-title{font-size:22px;font-weight:800;margin:5px 0 8px}
+.detail-text{color:var(--muted);margin-bottom:18px}
+.detail-grid{display:grid;gap:10px}
+.info{border:1px solid var(--border);border-radius:12px;padding:12px;background:#fbfcfe}
+.info label{display:block;font-size:11px;text-transform:uppercase;letter-spacing:.7px;color:var(--muted);font-weight:800;margin-bottom:5px}
+pre{margin:0;white-space:pre-wrap;font:12px/1.55 ui-monospace,SFMono-Regular,Menlo,monospace}
+.tabs{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:14px}
+.tab{border:1px solid var(--border);background:var(--surface);padding:8px 11px;border-radius:10px;cursor:pointer;color:var(--muted)}
+.tab.active{background:var(--accent);color:#fff;border-color:var(--accent)}
+.section{padding:20px;margin-top:18px}
+.hidden{display:none}
+.email{background:#fff;border:1px solid #d8dee8;border-radius:14px;padding:18px;color:#1b2738}
+.email .subject{font-weight:800;padding-bottom:10px;border-bottom:1px solid #e1e6ed;margin-bottom:13px}
+.email ol{padding-left:20px}
+.email .link{display:inline-block;color:#2563eb;font-weight:700}
+.metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.metric{border:1px solid var(--border);border-radius:13px;padding:13px;background:var(--surface2)}
+.metric strong{display:block;font-size:22px}.metric span{color:var(--muted);font-size:12px}
+.timeline{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}
+.t{padding:12px;border-radius:12px;border:1px solid var(--border);background:var(--surface2)}
+.t b{display:block;margin-bottom:5px}.t small{color:var(--muted)}
+.footer{color:var(--muted);text-align:center;font-size:12px;margin:22px 0}
+@media(max-width:1050px){.layout{grid-template-columns:1fr}.detail{position:static}.row{grid-template-columns:1fr}.arrow{transform:rotate(90deg)}}
+@media(max-width:650px){.app{padding:16px}.top{display:block}.pill{margin-top:12px}.branch,.metrics,.timeline{grid-template-columns:1fr 1fr}}
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="top">
+    <div>
+      <h1>AI ITSM Exact Solution Agent</h1>
+      <p class="lead">
+        An automated pipeline that reads a ServiceNow ticket description, finds the correct knowledge article,
+        identifies the exact resolution section and steps, validates the evidence, assigns the ticket,
+        updates ServiceNow, and emails the requester the verified solution with the KB link.
+      </p>
+    </div>
+    <span class="pill">Exact Solution Retrieval</span>
+  </header>
+
+  <div class="layout">
+    <main>
+      <section class="card flow-card">
+        <div class="flow-head">
+          <h2>Interactive workflow</h2>
+          <span class="pill">Click a step</span>
+        </div>
+
+        <div class="flow">
+          <div class="row">
+            <button class="node" data-step="trigger"><span class="step">01 · TRIGGER</span><h3>ServiceNow Ticket</h3><p>New ticket event starts the pipeline.</p></button>
+            <div class="arrow">→</div>
+            <button class="node" data-step="description"><span class="step">02 · INPUT</span><h3>Description Only</h3><p>Only the description is used to understand the problem.</p></button>
+            <div class="arrow">→</div>
+            <button class="node" data-step="analyze"><span class="step">03 · UNDERSTAND</span><h3>Problem Analyzer</h3><p>LLM extracts precise problem signals.</p></button>
+          </div>
+
+          <div class="band">Goal: convert messy natural language into reliable search signals without inventing missing information.</div>
+
+          <div class="row">
+            <button class="node" data-step="retrieve"><span class="step">04 · RETRIEVE</span><h3>Hybrid Search</h3><p>Vector + BM25 search the KB.</p></button>
+            <div class="arrow">→</div>
+            <button class="node" data-step="rerank"><span class="step">05 · RANK</span><h3>Article Reranker</h3><p>Improves precision among candidate articles.</p></button>
+            <div class="arrow">→</div>
+            <button class="node" data-step="section"><span class="step">06 · GO DEEPER</span><h3>Section Retrieval</h3><p>Searches inside articles for the exact scenario.</p></button>
+          </div>
+
+          <div class="band">This is the key differentiator: finding the article is only half the job. The system must locate the exact section/steps inside it.</div>
+
+          <div class="row">
+            <button class="node" data-step="validate"><span class="step">07 · VERIFY</span><h3>Solution Validator</h3><p>Checks whether the section actually solves the ticket.</p></button>
+            <div class="arrow">→</div>
+            <button class="node" data-step="confidence"><span class="step">08 · SCORE</span><h3>Confidence Engine</h3><p>Combines independent evidence signals.</p></button>
+            <div class="arrow">→</div>
+            <button class="node" data-step="extract"><span class="step">09 · EXTRACT</span><h3>Exact Steps</h3><p>Returns only steps supported by the KB.</p></button>
+          </div>
+
+          <div class="row">
+            <button class="node" data-step="assign"><span class="step">10 · EXECUTE</span><h3>Assignment Engine</h3><p>Chooses the best person using deterministic rules.</p></button>
+            <div class="arrow">→</div>
+            <button class="node" data-step="update"><span class="step">11 · UPDATE</span><h3>ServiceNow Update</h3><p>Assigns ticket and stores solution evidence.</p></button>
+            <div class="arrow">→</div>
+            <button class="node" data-step="email"><span class="step">12 · RESPOND</span><h3>Email Requester</h3><p>Sends solution + direct ServiceNow KB link.</p></button>
+          </div>
+
+          <div class="band">Final execution: the requester gets a grounded answer, while the assigned person receives the ticket with the same solution context.</div>
+
+          <div class="branch">
+            <button class="node good" data-step="success"><span class="step">SUCCESS PATH</span><h3>Exact solution verified</h3><p>Send steps + KB link, assign ticket, and log the outcome.</p></button>
+            <button class="node warn" data-step="fallback"><span class="step">SAFE FALLBACK</span><h3>No exact solution verified</h3><p>Never invent steps. Assign the ticket and notify transparently.</p></button>
+          </div>
+        </div>
+      </section>
+
+      <section class="card section">
+        <h2>Example: what happens to one ticket?</h2>
+        <div class="tabs">
+          <button class="tab active" data-tab="ticket">Ticket</button>
+          <button class="tab" data-tab="signals">Problem Signals</button>
+          <button class="tab" data-tab="articles">Article Search</button>
+          <button class="tab" data-tab="solution">Exact Solution</button>
+          <button class="tab" data-tab="response">Final Response</button>
+        </div>
+        <div id="ticket" class="tab-content">
+          <div class="info"><label>Ticket Description</label><pre>I changed my Windows password yesterday. Since then GlobalProtect VPN is not connecting. It shows authentication error 812.</pre></div>
+        </div>
+        <div id="signals" class="tab-content hidden">
+          <div class="info"><label>Structured problem</label><pre>{
+  "problem": "VPN authentication failure after password change",
+  "application": "GlobalProtect",
+  "platform": "Windows",
+  "error_codes": ["812"],
+  "trigger": "password change",
+  "goal": "Restore VPN connectivity"
+}</pre></div>
+        </div>
+        <div id="articles" class="tab-content hidden">
+          <div class="metrics">
+            <div class="metric"><strong>0.93</strong><span>KB-312 retrieval</span></div>
+            <div class="metric"><strong>0.97</strong><span>Reranker score</span></div>
+            <div class="metric"><strong>0.98</strong><span>Section solution match</span></div>
+            <div class="metric"><strong>96%</strong><span>Final confidence</span></div>
+          </div>
+          <p class="lead">The winning article is not selected merely because it says “VPN”. It wins because its section matches the error, application, trigger, symptoms, and actual resolution steps.</p>
+        </div>
+        <div id="solution" class="tab-content hidden">
+          <div class="info"><label>Verified section</label><pre>KB-312 → Error 812 → Password Change
+
+Resolution:
+1. Open Windows Credential Manager.
+2. Remove the saved VPN credentials.
+3. Restart GlobalProtect.
+4. Reconnect using the new password.</pre></div>
+        </div>
+        <div id="response" class="tab-content hidden">
+          <div class="email">
+            <div class="subject">Solution for your IT Support Ticket — INC0012345</div>
+            <p><strong>Problem:</strong> VPN authentication failure after password change.</p>
+            <p><strong>Recommended solution:</strong></p>
+            <ol>
+              <li>Open Windows Credential Manager.</li>
+              <li>Remove the saved VPN credentials.</li>
+              <li>Restart GlobalProtect.</li>
+              <li>Reconnect using the new password.</li>
+            </ol>
+            <p><strong>Knowledge Article:</strong> KB-312 — VPN Error 812 After Password Change</p>
+            <p><a class="link" href="#">Open ServiceNow KB Article →</a></p>
+            <p><strong>Assigned to:</strong> Priya — Network Support</p>
+            <p><strong>Solution confidence:</strong> 96%</p>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <aside class="card detail">
+      <div class="eyebrow" id="detailEyebrow">SELECT A COMPONENT</div>
+      <div class="detail-title" id="detailTitle">How the system works</div>
+      <div class="detail-text" id="detailText">Click any workflow component to see its input, internal logic, output, and why it exists.</div>
+      <div class="detail-grid">
+        <div class="info"><label>Receives</label><pre id="input">—</pre></div>
+        <div class="info"><label>Does</label><pre id="process">—</pre></div>
+        <div class="info"><label>Produces</label><pre id="output">—</pre></div>
+        <div class="info"><label>Why it matters</label><pre id="why">—</pre></div>
+      </div>
+    </aside>
+  </div>
+
+  <section class="card section">
+    <h2>Confidence model</h2>
+    <p class="lead">Confidence is not “the LLM feels 96% sure”. It is an evidence score calculated after retrieval, reranking and solution validation.</p>
+    <div class="metrics">
+      <div class="metric"><strong>20%</strong><span>Problem Match</span></div>
+      <div class="metric"><strong>25%</strong><span>Solution Match</span></div>
+      <div class="metric"><strong>15%</strong><span>Exact Technical Match</span></div>
+      <div class="metric"><strong>10%</strong><span>Root Cause Match</span></div>
+      <div class="metric"><strong>10%</strong><span>Historical Success</span></div>
+      <div class="metric"><strong>10%</strong><span>Article Quality</span></div>
+      <div class="metric"><strong>10%</strong><span>Reranker Score</span></div>
+      <div class="metric"><strong>100%</strong><span>Total Weight</span></div>
+    </div>
+  </section>
+
+  <section class="card section">
+    <h2>Response lifecycle</h2>
+    <div class="timeline">
+      <div class="t"><b>1. Find</b><small>Correct KB article</small></div>
+      <div class="t"><b>2. Locate</b><small>Exact section</small></div>
+      <div class="t"><b>3. Verify</b><small>Solution is supported</small></div>
+      <div class="t"><b>4. Execute</b><small>Assign + update ServiceNow</small></div>
+      <div class="t"><b>5. Respond</b><small>Email solution + KB link</small></div>
+    </div>
+  </section>
+
+  <section class="card section">
+    <h2>Technology map</h2>
+    <div class="info">
+      <pre>ServiceNow
+  Tickets • Knowledge Base • Assignment • Notifications • REST APIs
+
+Node.js + TypeScript + Fastify/Express
+  Pipeline orchestration and integrations
+
+LLM: Claude / OpenAI / Gemini / Mistral
+  Problem understanding • validation • exact-step extraction
+
+Embeddings
+  OpenAI / Cohere / Voyage / Sentence Transformers
+
+Retrieval
+  Vector DB: PostgreSQL + pgvector
+  Keyword: BM25 via OpenSearch / Elasticsearch / PostgreSQL FTS
+
+Reranker
+  Dedicated reranker / cross-encoder / suitable LLM reranker
+
+Data & operations
+  PostgreSQL • optional Redis • optional queue • OpenTelemetry</pre>
+    </div>
+  </section>
+
+  <p class="footer">AI ITSM Exact Solution Retrieval Agent</p>
+</div>
+
+<script>
+const data = {
+ trigger:{
+  title:"ServiceNow Ticket Trigger",
+  text:"A newly created ticket starts the automated pipeline.",
+  input:"ServiceNow incident/ticket event",
+  process:"Business Rule / Flow Designer / webhook → backend receives ticket ID",
+  output:"ticketId + event metadata",
+  why:"Starts processing immediately instead of waiting for manual triage."
+ },
+ description:{
+  title:"Description Only",
+  text:"The AI understanding layer uses the description as the source of truth for the user's problem.",
+  input:"Ticket description",
+  process:"Normalize text while preserving error codes, product names and technical details.",
+  output:"Clean description",
+  why:"Keeps problem understanding independent from potentially incorrect or inconsistent ticket metadata."
+ },
+ analyze:{
+  title:"Problem Analyzer",
+  text:"An LLM converts natural language into structured signals that improve exact retrieval.",
+  input:"Clean description",
+  process:"Extract problem, symptoms, application, platform, error codes, trigger/root-cause clues and user goal. Missing facts stay empty.",
+  output:'Problem JSON: {"problem":"...","error_codes":[],"trigger":"..."}',
+  why:"Structured signals make exact technical matching much stronger than a raw text query alone."
+ },
+ retrieve:{
+  title:"Hybrid Retrieval",
+  text:"The first search stage prioritizes recall: do not miss the article that could contain the answer.",
+  input:"Original description + problem signals",
+  process:"Run semantic vector search and BM25 keyword search; merge and deduplicate candidates.",
+  output:"Top ~20 candidate articles",
+  why:"Vector search handles paraphrases while BM25 preserves exact error codes, product names and technical terms."
+ },
+ rerank:{
+  title:"Article Reranker",
+  text:"The reranker deeply compares each candidate article against the ticket and improves ordering.",
+  input:"Ticket + candidate articles",
+  process:"Score ticket↔article relevance using a dedicated reranking model or controlled LLM.",
+  output:"Top 3–5 articles",
+  why:"Initial retrieval finds possibilities; reranking puts the most relevant article first."
+ },
+ section:{
+  title:"Section-Level Retrieval",
+  text:"One article can contain many unrelated scenarios. The system searches inside the shortlisted articles.",
+  input:"Top articles + problem signals",
+  process:"Retrieve structure-aware chunks/sections and prioritize resolution sections, exact errors and product matches.",
+  output:"Top candidate sections",
+  why:"This is what turns article recommendation into exact-solution retrieval."
+ },
+ validate:{
+  title:"Solution Validator",
+  text:"The validator checks whether a candidate section actually addresses the ticket and contains actionable resolution steps.",
+  input:"Ticket + candidate section",
+  process:"Check problem match, exact error, symptoms, trigger/root cause and presence of resolution steps. Use only supplied KB content.",
+  output:'{"solution_found":true,"solution_match":0.98,"steps_present":true}',
+  why:"Similarity alone can return a related article that does not actually solve the problem."
+ },
+ confidence:{
+  title:"Evidence-Based Confidence",
+  text:"Confidence is calculated from multiple independent signals, not from an LLM's self-reported number.",
+  input:"Retrieval, reranker, validator, article quality and historical signals",
+  process:"Weighted scoring initially; later calibrate weights from real resolved-ticket outcomes.",
+  output:"Final solution confidence, e.g. 96%",
+  why:"The system needs to know how strong the evidence is before sending an automated solution."
+ },
+ extract:{
+  title:"Exact Steps Extraction",
+  text:"The final LLM extracts only the steps supported by the validated KB section.",
+  input:"Original ticket + validated KB section",
+  process:"Extract relevant resolution steps; forbid outside knowledge and invented actions; retain source reference.",
+  output:"Verified steps + article/section source",
+  why:"The requester needs the actual solution, not the entire article."
+ },
+ assign:{
+  title:"Assignment Engine",
+  text:"Assignment is an execution decision after the solution has been identified.",
+  input:"Required skill + ServiceNow agent data",
+  process:"Filter by skill → availability → workload → historical success → SLA capability.",
+  output:"Best person + assignment group",
+  why:"The LLM identifies what problem needs solving; deterministic rules choose who should handle it."
+ },
+ update:{
+  title:"ServiceNow Update",
+  text:"The AI decision is written back to ServiceNow.",
+  input:"Ticket ID + assignee + article + section + confidence + solution",
+  process:"Assign ticket, add AI work note/fields, store KB ID/link and confidence.",
+  output:"Auditable, updated ServiceNow ticket",
+  why:"ServiceNow remains the operational system of record."
+ },
+ email:{
+  title:"Email Requester",
+  text:"After the solution is validated, the requester receives a grounded response through ServiceNow notifications.",
+  input:"Verified steps + article metadata + ticket/assignment data",
+  process:"Create notification with problem, steps, KB title, direct KB link, assignee and ticket number.",
+  output:"Requester email",
+  why:"The user gets an actionable answer immediately instead of waiting for an agent to explain it."
+ },
+ success:{
+  title:"Exact Solution Found",
+  text:"When the system verifies the solution, it performs the complete automated response.",
+  input:"solution_found=true",
+  process:"Assign → update ServiceNow → email verified steps + KB link → log outcome.",
+  output:"Ticket assigned and requester informed",
+  why:"This is the target automation path."
+ },
+ fallback:{
+  title:"No Exact Solution Verified",
+  text:"If the KB does not contain a verifiable exact solution, the system must not hallucinate one.",
+  input:"solution_found=false",
+  process:"Assign ticket → add transparent AI note → email requester that no exact solution was verified → log failure.",
+  output:"Safe fallback without invented steps",
+  why:"Trust is more important than forcing an answer."
+ }
+};
+
+const nodes = document.querySelectorAll(".node[data-step]");
+const eyebrow = document.getElementById("detailEyebrow");
+const title = document.getElementById("detailTitle");
+const text = document.getElementById("detailText");
+const input = document.getElementById("input");
+const process = document.getElementById("process");
+const output = document.getElementById("output");
+const why = document.getElementById("why");
+
+function selectStep(key){
+  const d=data[key];
+  if(!d)return;
+  nodes.forEach(n=>n.classList.toggle("active",n.dataset.step===key));
+  eyebrow.textContent="STEP DETAILS";
+  title.textContent=d.title;
+  text.textContent=d.text;
+  input.textContent=d.input;
+  process.textContent=d.process;
+  output.textContent=d.output;
+  why.textContent=d.why;
+}
+
+nodes.forEach(node=>node.addEventListener("click",()=>selectStep(node.dataset.step)));
+selectStep("trigger");
+
+document.querySelectorAll(".tab").forEach(tab=>{
+  tab.addEventListener("click",()=>{
+    document.querySelectorAll(".tab").forEach(t=>t.classList.remove("active"));
+    document.querySelectorAll(".tab-content").forEach(c=>c.classList.add("hidden"));
+    tab.classList.add("active");
+    document.getElementById(tab.dataset.tab).classList.remove("hidden");
+  });
+});
+</script>
+</body>
+</html>
