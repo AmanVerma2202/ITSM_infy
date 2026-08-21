@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>AI ITSM Exact Solution Agent</title>
+<title>AI ITSM Agent</title>
 <style>
 :root{
   --bg:#f6f8fc;--surface:#fff;--surface2:#f0f4fa;--text:#152238;
@@ -70,14 +70,13 @@ pre{margin:0;white-space:pre-wrap;font:12px/1.55 ui-monospace,SFMono-Regular,Men
 <div class="app">
   <header class="top">
     <div>
-      <h1>AI ITSM Exact Solution Agent</h1>
+      <h1>AI ITSM Agent</h1>
       <p class="lead">
-        An automated pipeline that reads a ServiceNow ticket description, finds the correct knowledge article,
+        An automated pipeline that reads a ServiceNow ticket , finds the correct knowledge article,
         identifies the exact resolution section and steps, validates the evidence, assigns the ticket,
         updates ServiceNow, and emails the requester the verified solution with the KB link.
       </p>
     </div>
-    <span class="pill">Exact Solution Retrieval</span>
   </header>
 
   <div class="layout">
@@ -97,7 +96,6 @@ pre{margin:0;white-space:pre-wrap;font:12px/1.55 ui-monospace,SFMono-Regular,Men
             <button class="node" data-step="analyze"><span class="step">03 · UNDERSTAND</span><h3>Problem Analyzer</h3><p>LLM extracts precise problem signals.</p></button>
           </div>
 
-          <div class="band">Goal: convert messy natural language into reliable search signals without inventing missing information.</div>
 
           <div class="row">
             <button class="node" data-step="retrieve"><span class="step">04 · RETRIEVE</span><h3>Hybrid Search</h3><p>Vector + BM25 search the KB.</p></button>
@@ -107,7 +105,7 @@ pre{margin:0;white-space:pre-wrap;font:12px/1.55 ui-monospace,SFMono-Regular,Men
             <button class="node" data-step="section"><span class="step">06 · GO DEEPER</span><h3>Section Retrieval</h3><p>Searches inside articles for the exact scenario.</p></button>
           </div>
 
-          <div class="band">This is the key differentiator: finding the article is only half the job. The system must locate the exact section/steps inside it.</div>
+
 
           <div class="row">
             <button class="node" data-step="validate"><span class="step">07 · VERIFY</span><h3>Solution Validator</h3><p>Checks whether the section actually solves the ticket.</p></button>
@@ -274,7 +272,7 @@ const data = {
   why:"Starts processing immediately instead of waiting for manual triage."
  },
  description:{
-  title:"Description Only",
+  title:"Description ",
   text:"The AI understanding layer uses the description as the source of truth for the user's problem.",
   input:"Ticket description",
   process:"Normalize text while preserving error codes, product names and technical details.",
